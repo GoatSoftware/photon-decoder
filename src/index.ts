@@ -73,6 +73,7 @@ function readPackage(pkg) {
     const commandTypeMap = {
       0: parseReliable,
       1: parseBigReliable,
+      2: parseReliable,
       4: parseLogout,
       5: parseReliable,
       6: parseReliable,
@@ -82,7 +83,12 @@ function readPackage(pkg) {
     if (commandTypeMap[cmd_type_id]) {
       commandTypeMap[cmd_type_id](cmd_type_id, pkg);
     } else {
-      console.log('Not parsed: ', cmd_type_id);
+      if (!isNaN(cmd_type_id)) {
+        console.log('Out of bounds. Default process', cmd_type_id);
+        parseReliable(cmd_type_id, pkg);
+      } else {
+        console.log('Not parsed. Type NaN');
+      }
     }
   }
   
@@ -145,7 +151,13 @@ function parseReliable(cmd_type_id, pkg) {
     const msg_type = readNext(pkg, 1);
     if (msgTypeMap[msg_type]) {
       const msg = readNext(pkg, aoPkg.msg_len - 12);
-      msgTypeMap[msg_type](msg);
+      const message = msgTypeMap[msg_type](msg);
+      console.log(JSON.stringify(message));
+    } else {
+      console.warn('Not typed message', msg_type[0]);
+      const msg = readNext(pkg, aoPkg.msg_len - 12);
+      const message = msgTypeMap[2](msg);
+      console.log('?', JSON.stringify(message), '?');
     }
   }
 }
@@ -187,9 +199,11 @@ function parseReliableFragment(cmd_type_id, pkg) {
 function requestMessage(msg) {
   // console.log('request');
   const code = msg.splice(0, 1);
-  typeDecoders.decodeIntHashMap(msg);
-  // const code = msg.splice(0, 1);
-  // console.log(msg.toString());
+  const intHash = typeDecoders.decodeIntHashMap(msg);
+  return {
+    code,
+    intHash
+  };
 }
 
 function responseMessage(msg) {
