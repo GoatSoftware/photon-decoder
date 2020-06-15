@@ -37,11 +37,11 @@ function decodeType(key_type_code: number, msg: number[]): unknown {
  * 
  */
 function decodeIntHashMap(msg: number[]): Record<number, unknown> {
-  const size = hexToNumber(msg.splice(0, 2));
+  const size = decodeTypeShort(msg);
   const ret = {};
   for (let i = 0; i < size; i++) {
-    const key = hexToNumber(msg.splice(0, 1));
-    const key_type_code = hexToNumber(msg.splice(0, 1));
+    const key = decodeTypeByte(msg);
+    const key_type_code = decodeTypeByte(msg);
     ret[key] = decodeType(key_type_code, msg);
   }
   return ret;
@@ -65,9 +65,9 @@ function decodeTypeNull(msg: number[]) {
  * 
  */
 function decodeTypeDictionary(msg: number[]) {
-  const key_type_code = hexToNumber(msg.splice(0, 1));
-  const value_type_code = hexToNumber(msg.splice(0, 1));
-  const size = hexToNumber(msg.splice(0, 2));
+  const key_type_code = decodeTypeByte(msg);
+  const value_type_code = decodeTypeByte(msg);
+  const size = decodeTypeShort(msg);
   const ret = {};
   for (let i = 0; i < size; i++) {
     const key = decodeType(key_type_code, msg) as any;
@@ -80,7 +80,12 @@ function decodeTypeDictionary(msg: number[]) {
  * 
  */
 function decodeTypeStringArray(msg: number[]) {
-  console.warn('decodeTypeStringArray not implemented', msg);
+  const size = decodeTypeShort(msg);
+  const value = [];
+  for (let i = 0; i < size; i++) {
+    value.push(decodeTypeString(msg));
+  }
+  return value;
 }
 
 /**
@@ -109,7 +114,7 @@ function decodeTypeDouble(msg: number[]): number {
  * 
  */
 function decodeTypeEventData(msg: number[]) {
-  const code = hexToNumber(msg.splice(0,1));
+  const code = decodeTypeByte(msg);
   const parameters = decodeIntHashMap(msg);
   return {
     code,
@@ -157,7 +162,7 @@ function decodeTypeLong(msg: number[]): number {
  * 
  */
 function decodeTypeBooleanArray(msg: number[]) {
-  const size = hexToNumber(msg.splice(0, 2));
+  const size = decodeTypeShort(msg);
   const value = [];
   for (let i = 0; i < size; i++) {
     value.push(decodeTypeBoolean(msg));
@@ -176,9 +181,9 @@ function decodeTypeBoolean(msg: number[]): boolean {
  * 
  */
 function decodeTypeOperationResponse(msg: number[]) {
-  const code = hexToNumber(msg.splice(0,1));
+  const code = decodeTypeByte(msg);
   const return_code = decodeTypeShort(msg);
-  const maybe_debug_message_type_code = hexToNumber(msg.splice(0,1));
+  const maybe_debug_message_type_code = decodeTypeByte(msg);
   const maybe_debug_message = decodeType(maybe_debug_message_type_code, msg);
   const debug_message = maybe_debug_message ?? 'None';
   const parameters = decodeIntHashMap(msg);
@@ -194,7 +199,7 @@ function decodeTypeOperationResponse(msg: number[]) {
  * 
  */
 function decodeTypeOperationRequest(msg: number[]) {
-  const code = hexToNumber(msg.splice(0,1));
+  const code = decodeTypeByte(msg);
   const parameters = decodeIntHashMap(msg);
   return {
     code,
@@ -206,7 +211,7 @@ function decodeTypeOperationRequest(msg: number[]) {
  * 
  */
 function decodeTypeString(msg: number[]): string {
-  const size = hexToNumber(msg.splice(0, 2));
+  const size = decodeTypeShort(msg);
   const ret = [];
   for (let i = 0; i < size; i++) {
     ret.push(String.fromCharCode(msg.splice(0, 1)[0]));
@@ -218,7 +223,7 @@ function decodeTypeString(msg: number[]): string {
  * 
  */
 function decodeTypeByteArray(msg: number[]) {
-  const size = hexToNumber(msg.splice(0, 4));
+  const size = decodeTypeInteger(msg);
   const value = [];
   for (let i = 0; i < size; i++) {
     value.push(decodeTypeByte(msg));
@@ -230,8 +235,8 @@ function decodeTypeByteArray(msg: number[]) {
  * 
  */
 function decodeTypeArray(msg: number[]): number[] {
-  const size = hexToNumber(msg.splice(0, 2));
-  const key_type_code = hexToNumber(msg.splice(0, 1));
+  const size = decodeTypeShort(msg);
+  const key_type_code = decodeTypeByte(msg);
   const ret = [];
   for (let i = 0; i < size; i++) {
     ret.push(decodeType(key_type_code, msg));
@@ -243,10 +248,10 @@ function decodeTypeArray(msg: number[]): number[] {
  * 
  */
 function decodeTypeObjectArray(msg: number[]) {
-  const size = hexToNumber(msg.splice(0, 2));
+  const size = decodeTypeShort(msg);
   const ret = [];
   for (let i = 0; i < size; i++) {
-    const key_type_code = hexToNumber(msg.splice(0, 1));
+    const key_type_code = decodeTypeByte(msg);
     ret.push(decodeType(key_type_code, msg));
   }
   return ret;
