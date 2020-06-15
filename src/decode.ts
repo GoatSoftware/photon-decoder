@@ -51,28 +51,36 @@ function decodeIntHashMap(msg: number[]): Record<number, unknown> {
  * 
  */
 function decodeTypeNone(msg: number[]) {
-  console.warn('decodeTypeNone not implemented');
+  console.warn('decodeTypeNone not implemented', msg);
 }
 
 /**
  * 
  */
 function decodeTypeNull(msg: number[]) {
-  console.warn('decodeTypeNull not implemented');
+  console.warn('decodeTypeNull not implemented', msg);
 }
 
 /**
  * 
  */
 function decodeTypeDictionary(msg: number[]) {
-  console.warn('decodeTypeDictionary not implemented');
+  const key_type_code = hexToNumber(msg.splice(0, 1));
+  const value_type_code = hexToNumber(msg.splice(0, 1));
+  const size = hexToNumber(msg.splice(0, 2));
+  const ret = {};
+  for (let i = 0; i < size; i++) {
+    const key = decodeType(key_type_code, msg) as any;
+    ret[key] = decodeType(value_type_code, msg);
+  }
+  return ret;
 }
 
 /**
  * 
  */
 function decodeTypeStringArray(msg: number[]) {
-  console.warn('decodeTypeStringArray not implemented');
+  console.warn('decodeTypeStringArray not implemented', msg);
 }
 
 /**
@@ -86,17 +94,27 @@ function decodeTypeByte(msg: number[]): number {
  * 
  */
 function decodeTypeDouble(msg: number[]): number {
-  return hexToNumber(msg.splice(0, 8));
+  const float = msg.splice(0, 8);
+  const buffer = new ArrayBuffer(8);
+  const view = new DataView(buffer);
+
+  float.forEach((i, index) => {
+    view.setInt8(index, i);
+  });
+  
+  return view.getFloat64(0);
 }
 
 /**
  * 
  */
 function decodeTypeEventData(msg: number[]) {
-  let code: u8 = self.decode()?;
-  let parameters: HashMap<u8, Value> = self.decode()?;
-  Ok(EventData { code, parameters })
-  console.warn('decodeTypeEventData not implemented');
+  const code = hexToNumber(msg.splice(0,1));
+  const parameters = decodeIntHashMap(msg);
+  return {
+    code,
+    parameters
+  }
 }
 
 /**
@@ -139,7 +157,12 @@ function decodeTypeLong(msg: number[]): number {
  * 
  */
 function decodeTypeBooleanArray(msg: number[]) {
-  console.warn('decodeTypeBooleanArray not implemented');
+  const size = hexToNumber(msg.splice(0, 2));
+  const value = [];
+  for (let i = 0; i < size; i++) {
+    value.push(decodeTypeBoolean(msg));
+  }
+  return value;
 }
 
 /**
@@ -153,14 +176,30 @@ function decodeTypeBoolean(msg: number[]): boolean {
  * 
  */
 function decodeTypeOperationResponse(msg: number[]) {
-  console.warn('decodeTypeOperationResponse not implemented');
+  const code = hexToNumber(msg.splice(0,1));
+  const return_code = decodeTypeShort(msg);
+  const maybe_debug_message_type_code = hexToNumber(msg.splice(0,1));
+  const maybe_debug_message = decodeType(maybe_debug_message_type_code, msg);
+  const debug_message = maybe_debug_message ?? 'None';
+  const parameters = decodeIntHashMap(msg);
+  return {
+    code,
+    return_code,
+    debug_message,
+    parameters
+  };
 }
 
 /**
  * 
  */
 function decodeTypeOperationRequest(msg: number[]) {
-  console.warn('decodeTypeOperationRequest not implemented');
+  const code = hexToNumber(msg.splice(0,1));
+  const parameters = decodeIntHashMap(msg);
+  return {
+    code,
+    parameters
+  }
 }
 
 /**
@@ -179,7 +218,12 @@ function decodeTypeString(msg: number[]): string {
  * 
  */
 function decodeTypeByteArray(msg: number[]) {
-  console.warn('decodeTypeByteArray not implemented');
+  const size = hexToNumber(msg.splice(0, 4));
+  const value = [];
+  for (let i = 0; i < size; i++) {
+    value.push(decodeTypeByte(msg));
+  }
+  return value;
 }
 
 /**
@@ -199,7 +243,13 @@ function decodeTypeArray(msg: number[]): number[] {
  * 
  */
 function decodeTypeObjectArray(msg: number[]) {
-  console.warn('decodeTypeObjectArray not implemented');
+  const size = hexToNumber(msg.splice(0, 2));
+  const ret = [];
+  for (let i = 0; i < size; i++) {
+    const key_type_code = hexToNumber(msg.splice(0, 1));
+    ret.push(decodeType(key_type_code, msg));
+  }
+  return ret;
 }
 
 export default {
