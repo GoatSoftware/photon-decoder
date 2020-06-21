@@ -1,4 +1,5 @@
 import { hexToNumber } from './helpers';
+import { PhotonPackageHeader } from './decoder.models';
 
 
 /**
@@ -36,7 +37,22 @@ function decodeType(key_type_code: number, msg: number[]): unknown {
 /**
  * 
  */
+function decodePhotonHeader(msg: number[]): PhotonPackageHeader {
+  return {
+    peer_id: hexToNumber(msg.splice(0, 2)),
+    crc_enabled: hexToNumber(msg.splice(0, 1)),
+    command_count: hexToNumber(msg.splice(0, 1)),
+    timestamp: hexToNumber(msg.splice(0, 4)),
+    challenge: hexToNumber(msg.splice(0, 4))
+  };
+}
+
+/**
+ * 
+ */
 function decodeIntHashMap(msg: number[]): Record<number, unknown> {
+  // console.log('decodeIntHashMap', JSON.stringify(msg));
+  
   const size = decodeTypeShort(msg);
   const ret = {};
   for (let i = 0; i < size; i++) {
@@ -51,14 +67,20 @@ function decodeIntHashMap(msg: number[]): Record<number, unknown> {
  * 
  */
 function decodeTypeNone(msg: number[]) {
-  console.warn('decodeTypeNone not implemented', msg);
+  if (msg.length) {
+    // console.warn('decodeTypeNone not implemented', JSON.stringify(msg));
+  }
+  return 'None';
 }
 
 /**
  * 
  */
 function decodeTypeNull(msg: number[]) {
-  console.warn('decodeTypeNull not implemented', msg);
+  if (msg.length) {
+    // console.warn('decodeTypeNull not implemented', JSON.stringify(msg));
+  }
+  return 'Null';
 }
 
 /**
@@ -119,7 +141,7 @@ function decodeTypeEventData(msg: number[]) {
   return {
     code,
     parameters
-  }
+  };
 }
 
 /**
@@ -204,7 +226,7 @@ function decodeTypeOperationRequest(msg: number[]) {
   return {
     code,
     parameters
-  }
+  };
 }
 
 /**
@@ -258,6 +280,7 @@ function decodeTypeObjectArray(msg: number[]) {
 }
 
 export default {
+  decodePhotonHeader,
   decodeIntHashMap,
   decodeTypeNone,
   decodeTypeNull,

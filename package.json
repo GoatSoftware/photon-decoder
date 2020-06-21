@@ -9,7 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "cap": "^0.2.1"
+    "cap": "^0.2.1",
+    "rxjs": "^6.5.5"
   },
   "devDependencies": {
     "@types/jest": "^26.0.0",
