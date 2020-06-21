@@ -5,10 +5,19 @@
   "version": "0.2.0",
   "configurations": [
     {
-        "name": "Current TS File",
+        "name": "Feeder",
         "type": "node",
         "request": "launch",
-        "args": ["src\\index.ts"],
+        "args": ["packages/feeder/src/index.ts"],
+        "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
+        "sourceMaps": true,
+        "cwd": "${workspaceRoot}",
+        "protocol": "inspector",
+    }, {
+        "name": "Nexus",
+        "type": "node",
+        "request": "launch",
+        "args": ["packages/nexus/src/index.ts"],
         "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
         "sourceMaps": true,
         "cwd": "${workspaceRoot}",
