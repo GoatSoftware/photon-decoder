@@ -8,7 +8,7 @@ export function init(): Promise<boolean> {
   return new Promise((resolve) => {
     console.log('connecting');
     
-    socket = connect('http://localhost:3000');
+    socket = connect('http://localhost:6768');
     socket.on('handshake', () => {
       console.log('received handshake');
       socket.emit('handshake', {

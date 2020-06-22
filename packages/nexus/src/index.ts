@@ -1,7 +1,10 @@
 import { listen, Socket } from 'socket.io';
-const PORT = 3000;
+const PORT = 6768;
 const server = listen(PORT);
 console.log(`Starting Nexus on ${PORT}`);
+
+const feeders: Socket[] = [];
+const consumers: Socket[] = [];
 
 
 interface HandshakePayload {
@@ -30,15 +33,20 @@ function validateToken(token: string) {
 }
 
 function initFeeder(socket: Socket) {
+  feeders.push(socket);
   console.log('Feeder connected');
   
   socket.on('aoPackage', aoPackageHandler);
 }
 
 function initConsumer(socket: Socket) {
+  consumers.push(socket);
   socket.emit('aoPackage', {});
 }
 
 function aoPackageHandler(aoPkg) {
+  consumers.forEach(i => {
+    i.emit('pkg', aoPkg);
+  });
   console.log(aoPkg);
 }
