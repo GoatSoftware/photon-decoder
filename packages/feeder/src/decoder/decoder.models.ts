@@ -13,4 +13,5 @@ export interface PhotonPackageHeader {
 
 export interface PhotonPackagePayload {
   cmd_type_id: number;
+  intHash?: Record<number, unknown>
 }

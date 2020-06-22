@@ -9,6 +9,9 @@
         "type": "node",
         "request": "launch",
         "args": ["packages/feeder/src/index.ts"],
+        "windows": {
+          "args": ["packages\\feeder\\src\\index.ts"]
+        },
         "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
         "sourceMaps": true,
         "cwd": "${workspaceRoot}",
@@ -18,6 +21,9 @@
         "type": "node",
         "request": "launch",
         "args": ["packages/nexus/src/index.ts"],
+        "windows": {
+          "args": ["packages\\nexus\\src\\index.ts"]
+        },
         "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
         "sourceMaps": true,
         "cwd": "${workspaceRoot}",

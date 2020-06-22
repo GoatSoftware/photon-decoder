@@ -1,15 +1,21 @@
-import { map } from 'rxjs/operators';
+import { map, filter } from 'rxjs/operators';
 
 import sniffer from './sniffer';
 import decodePackage from './decoder';
-import translatePackage from './translator';
-import send from './sender';
+import { translatePackage, knownPackages } from './translator';
+import { init as initSender, send } from './sender';
 
-sniffer()
-  .pipe(
-    map(decodePackage),
-    map(translatePackage)
-  )
-  .subscribe(pkg => {
-    send(pkg);
+initSender()
+  .then(connected => {
+    if (connected) {
+      sniffer()
+        .pipe(
+          map(decodePackage),
+          filter(knownPackages),
+          map(translatePackage)
+        )
+        .subscribe(pkg => {
+          send(pkg);
+        });
+    }
   });
