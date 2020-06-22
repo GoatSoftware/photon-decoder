@@ -27,8 +27,6 @@ server.on('connection', function(socket) {
 });
 
 function validateToken(token: string) {
-  console.log(token);
-  
   return true;
 }
 
@@ -40,13 +38,13 @@ function initFeeder(socket: Socket) {
 }
 
 function initConsumer(socket: Socket) {
+  console.log('Consumer connected');
   consumers.push(socket);
-  socket.emit('aoPackage', {});
 }
 
 function aoPackageHandler(aoPkg) {
   consumers.forEach(i => {
-    i.emit('pkg', aoPkg);
+    i.emit('aoPackage', aoPkg);
   });
   console.log(aoPkg);
 }

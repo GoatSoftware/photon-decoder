@@ -1,6 +1,11 @@
 {
   "name": "root",
   "private": true,
+  "scripts": {
+    "nexus": "ts-node packages/nexus/src/index.ts",
+    "feeder": "ts-node packages/feeder/src/index.ts",
+    "atlas": "parcel packages/atlas/src/index.html"
+  },
   "devDependencies": {
     "lerna": "^3.22.1",
     "ts-node": "^8.10.2",

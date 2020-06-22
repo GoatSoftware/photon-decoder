@@ -1,7 +1,7 @@
 import { PhotonPackage } from '../decoder/decoder.models';
 
 export function knownPackages(pkg: PhotonPackage): boolean {
-  if (pkg.commands.length > 0 && pkg.commands[0].intHash && pkg.commands[0].intHash[253] === 21) {
+  if (pkg.commands.length > 0 && pkg.commands[0] && pkg.commands[0].intHash && pkg.commands[0].intHash[253] === 21) {
     return true;
   }
   false;

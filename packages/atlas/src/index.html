@@ -4,8 +4,33 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
+  <style>
+    .map {
+      width: 65vh;
+      height: 65vh;
+      border: 1px solid black;
+      box-sizing: border-box;
+      transform: rotate(225deg) rotateY(180deg);
+      margin-top: 170px;
+      margin-left: 140px;
+      background-image: url(http://goatsoft.es/atlas/assets/maps/4203.png);
+      background-size: contain;
+    }
+    .point {
+      width: 15px;
+      height: 15px;
+      border-radius: 0 50% 50% 50%;
+      border: 3px solid black;
+      transform: rotate(45deg);
+      margin-top: 5px;
+      position: absolute;
+    }
+  </style>
 </head>
 <body>
+  <div class="map">
+    <div class="point"></div>
+  </div>
   <script src="index.ts"></script>
 </body>
 </html>
