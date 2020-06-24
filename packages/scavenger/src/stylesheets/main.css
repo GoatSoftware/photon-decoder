@@ -35,7 +35,7 @@ body::after{
   text-align: center;
 }
 
-.login-form {
+#login-form {
   display: flex;
   flex-direction: column;
 }

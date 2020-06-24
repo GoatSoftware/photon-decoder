@@ -35,7 +35,7 @@ app.on("ready", () => {
 
   const mainWindow = createWindow("main", {
     width: 600,
-    height: 350,
+    height: 450,
     webPreferences: {
       nodeIntegration: true
     },
