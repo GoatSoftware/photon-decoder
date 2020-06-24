@@ -1,6 +1,6 @@
 import { connect } from 'socket.io-client';
 
-const socket = connect('http://localhost:6768');
+const socket = connect('http://goatsoft.es:6768');
 
 const minX = -450;
 const minY = -450;
@@ -10,7 +10,8 @@ const maxY = 450;
 socket.on('handshake', () => {
     socket.emit('handshake', {
         type: 'CONSUMER',
-        token: ''
+        token: '',
+        name: 'Spezimen'
     });
     socket.on('handshakeEnd', initAtlas);
 });
@@ -22,7 +23,7 @@ function initAtlas() {
 
 function handlePackage(pkg) {
     
-    let point: HTMLElement = document.getElementsByClassName('point ' + pkg.name)[0];
+    let point: HTMLElement = document.getElementsByClassName('point ' + pkg.name)[0] as HTMLElement;
 
     if (!point) {
         point = document.createElement('div');
@@ -40,7 +41,7 @@ function handlePackage(pkg) {
     coords.x = ((pkg.aoPkg.coords[0] + maxX) * 100) / (maxX - minX);
     coords.y = ((pkg.aoPkg.coords[1] + maxY) * 100) / (maxY - minY);
     console.log(coords);
-    point.style.top = `calc(${coords.y}% - 10px)`;
-    point.style.left = `calc(${coords.x}% - 10px)`;
+    point.style.top = `calc(${coords.y}% - 7.5px)`;
+    point.style.left = `calc(${coords.x}% - 7.5px)`;
     point.style.transform = `rotate(${-1 * (pkg.aoPkg.heading + 135)}deg)`;
 }

@@ -1,21 +1,13 @@
 import { listen, Socket } from 'socket.io';
+import { User, HandshakePayload } from './types/types';
+
 const PORT = 6768;
 const server = listen(PORT);
-console.log(`Starting Nexus on ${PORT}`);
+console.log(`Starting Nexus on port ${PORT}`);
 
-const feeders: user[] = [];
-const consumers: user[] = [];
+const feeders: User[] = [];
+const consumers: User[] = [];
 
-interface user {
-  name: string;
-  socket: Socket;
-}
-
-interface HandshakePayload {
-  token: string;
-  type: 'FEEDER' | 'CONSUMER';
-  name: string;
-}
 
 server.on('connection', function(socket) {
   socket.emit('handshake');
@@ -42,7 +34,9 @@ function initFeeder(name: string, socket: Socket) {
   });
   console.log('Feeder connected');
   
-  socket.on('aoPackage', aoPackageHandler(name));
+  socket.on('aoPackage', (aoPkg) => {
+    aoPackageHandler(name, aoPkg);
+  });
 }
 
 function initConsumer(name: string, socket: Socket) {
@@ -53,14 +47,12 @@ function initConsumer(name: string, socket: Socket) {
   });
 }
 
-function aoPackageHandler(name: string) {
-  return (aoPkg) => {
-    consumers.forEach(i => {
-      i.socket.emit('aoPackage', {
-        name,
-        aoPkg
-      });
+function aoPackageHandler(name: string, aoPkg) {
+  consumers.forEach(i => {
+    i.socket.emit('aoPackage', {
+      name,
+      aoPkg
     });
-    console.log(aoPkg);
-  };
+  });
+  console.log(aoPkg);
 }

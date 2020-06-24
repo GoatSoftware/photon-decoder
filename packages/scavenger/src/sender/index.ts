@@ -3,18 +3,18 @@ import { connect, Socket } from 'socket.io-client';
 
 let socket: typeof Socket;
 
-export function init(): Promise<boolean> {
+export function init(user: string): Promise<boolean> {
   let connected = false;
   return new Promise((resolve) => {
     console.log('connecting');
-    
+
     socket = connect('http://goatsoft.es:6768');
     socket.on('handshake', () => {
       console.log('received handshake');
       socket.emit('handshake', {
         type: 'FEEDER',
         token: '',
-        name: 'Spezimen'
+        name: user
       });
       socket.on('handshakeEnd', () => {
         console.log('handshake end');
