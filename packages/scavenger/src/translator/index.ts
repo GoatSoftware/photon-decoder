@@ -1,37 +1,106 @@
-import { PhotonPackage } from '../decoder/decoder.models';
+import { PhotonPackagePayload } from '../decoder/decoder.models';
 
-export function knownPackages(pkg: PhotonPackage): boolean {
-  if (pkg.commands.length > 0 && pkg.commands[0] && pkg.commands[0].intHash && pkg.commands[0].intHash[253] === 21) {
-    return true;
+const requestMessageMap = {
+  21: true
+};
+
+const responseMessageMap = {
+  35: true
+};
+
+export function knownPackages(command: PhotonPackagePayload): boolean {
+  const messagesMap = {
+    2: knownRequests,
+    3: knownResponses,
+    4: knownEvents,
+  };
+
+  if (messagesMap[command.msg_type]) {
+    return messagesMap[command.msg_type](command);
   }
-  false;
+  return false;
 }
 
-export function translatePackage(pkg: PhotonPackage): AoPackage {
+function knownRequests(command: PhotonPackagePayload) {
+  return requestMessageMap[command.parameters[253] as number];
+}
+
+function knownResponses(command: PhotonPackagePayload) {
+  return responseMessageMap[command.parameters[253] as number];
+}
+
+function knownEvents(command: PhotonPackagePayload) {
+  return command.code !== 2;
+  // return command.code !== 2 && command.code !== 1;
+  // return false;
+}
+
+export function translatePackage(command: PhotonPackagePayload): AoPackage {
+
+  const messagesMap = {
+    2: mapRequests,
+    3: mapResponses,
+    4: mapEvents,
+  };
+
+  if (messagesMap[command.msg_type]) {
+    return messagesMap[command.msg_type](command);
+  }
+}
+
+function mapRequests(command: PhotonPackagePayload) {
   const codeMapper = {
     21: moveMapper
   };
-  
-  return codeMapper[pkg.commands[0].intHash[253] as number](pkg);
-  // if (codeMapper[pkg.commands[0].intHash[253] as number]) {
+
+  const mapFn = codeMapper[command.parameters && command.parameters[253] as number];
+
+  if (mapFn) {
+    return mapFn(command);
+  }
+}
+
+function mapResponses(command: PhotonPackagePayload) {
+  const codeMapper = {
+    35: zoneChangeMapper
+  };
+
+  const mapFn = codeMapper[command.parameters && command.parameters[253] as number];
+
+  if (mapFn) {
+    return mapFn(command);
+  }
+}
+
+function mapEvents(command: PhotonPackagePayload) {
+  const codeMapper = {
+    // 21: moveMapper
+  };
+
+  // console.log(command.parameters);
+
+  // const mapFn = codeMapper[command.parameters && command.parameters[253] as number];
+
+  // if (mapFn) {
+  //   return mapFn(command);
   // }
 }
 
 export interface AoPackage {
-  type: 'MOVE'
+  type: 'MOVE' | 'ZONE_CHANGE';
 }
 
 interface MoveAoPackage extends AoPackage {
-  timestamp: number,
-  coords: number[],
-  heading: number,
-  targetCoords: number[],
-  speed: number,
-  target: number
+  timestamp: number;
+  coords: number[];
+  heading: number;
+  targetCoords: number[];
+  speed: number;
+  target: number;
 }
 
-function moveMapper(pkg: PhotonPackage): MoveAoPackage {
-  
+function moveMapper(command: PhotonPackagePayload): MoveAoPackage {
+
   /**
    * pkg type request
    * 253 === 21 -> Move
@@ -43,15 +112,33 @@ function moveMapper(pkg: PhotonPackage): MoveAoPackage {
    * 5 Target moving to (enemy or item)
    * 253 code
    */
-  const intHash = pkg.commands[0].intHash;
-  
+  const parameters = command.parameters;
+
   return {
     type: 'MOVE',
-    timestamp: intHash[0] as number,
-    coords: intHash[1] as number[],
-    heading: intHash[2] as number,
-    targetCoords: intHash[3] as number[],
-    speed: intHash[4] as number,
-    target: intHash[5] as number
+    timestamp: parameters[0] as number,
+    coords: parameters[1] as number[],
+    heading: parameters[2] as number,
+    targetCoords: parameters[3] as number[],
+    speed: parameters[4] as number,
+    target: parameters[5] as number
+  };
+}
+
+interface ZoneChangeAoPackage extends AoPackage {
+  zone: string;
+  zoneType?: string;
+  owner?: string;
+  zoneChangeCount: number;
+}
+
+function zoneChangeMapper(command: PhotonPackagePayload): ZoneChangeAoPackage {
+  const parameters = command.parameters;
+  return {
+    type: 'ZONE_CHANGE',
+    zone: parameters[0] as string,
+    zoneType: parameters[1] as string,
+    owner: parameters[2] as string,
+    zoneChangeCount: parameters[255] as number
   };
 }

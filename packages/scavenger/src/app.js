@@ -8,7 +8,7 @@ import { init as initSender, send } from './sender';
 import sniffer from './sniffer';
 import decodePackage from './decoder';
 import { knownPackages, translatePackage } from './translator';
-import { map, filter } from 'rxjs/operators';
+import { map, filter, pluck, concatAll } from 'rxjs/operators';
 
 // ----------------------------------------------------------------------------
 // Everything below is just to show you how it works. You can delete all of it.
@@ -38,7 +38,6 @@ async function load() {
   const remember = localStorage.getItem('remember');
   if (remember) {
     const user = localStorage.getItem('user');
-    const password = localStorage.getItem('password');
     const passwordLength = localStorage.getItem('passwordLength');
 
     document.getElementById('user').value = user;
@@ -81,6 +80,9 @@ function startScavenge(user) {
         sniffer()
           .pipe(
             map(decodePackage),
+            pluck('commands'),
+            concatAll(),
+            filter(i => i),
             filter(knownPackages),
             map(translatePackage)
           )

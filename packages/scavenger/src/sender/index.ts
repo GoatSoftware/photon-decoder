@@ -32,6 +32,7 @@ export function init(user: string): Promise<boolean> {
 }
 
 export function send(pkg: AoPackage): void {
-  console.log(pkg);
-  socket.emit('aoPackage', pkg);
+  if (pkg) {
+    socket.emit('aoPackage', pkg);
+  }
 }
