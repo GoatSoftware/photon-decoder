@@ -1,44 +1,76 @@
+<style>
+  main {
+    height: 100%;
+    color: white;
+    display: flex;
+  }
+
+  .app {
+    height: calc(100% - 70px);
+    position: relative;
+  }
+</style>
+
 <script>
-	import { onMount } from 'svelte';
-	import Menu from './Menu.svelte';
-  import Zone from './Zone.svelte';
-  
-  let mapInfo;
+  import Theme from "./Theme.svelte";
 
-  let id = '3004';
-  const hash = location.hash;
-  id = hash.split('#')[1] || id;
-  
-	async function fetchZone() {
-		mapInfo = await (await fetch(`http://localhost:5000/api/v0/${id}.json`, {
-      mode: 'cors',
-      headers: {
-        'Access-Control-Allow-Origin':'*'
-      }})).json();
+  import Login from "./login/Login.svelte";
+  import Map from "./map/Map.svelte";
+  // import Admin from "./admin/Admin.svelte";
+  // import Design from "./design/Design.svelte";
+  // import DesignAdd from "./design-add/DesignAdd.svelte";
+  // import Request from "./request/Request.svelte";
+  // import RequestAdd from "./request-add/RequestAdd.svelte";
+  // import Craft from "./craft/Craft.svelte";
+  // import Deliver from "./deliver/Deliver.svelte";
+  import Menu from "./menu/Menu.svelte";
+
+  let logged = false;
+  let path = '';
+
+  // const permissionMap = {
+  //   '/admin': 'ADMIN',
+  //   '/design': 'DESIGN',
+  //   '/design/create': 'DESIGN',
+  //   '/request': 'REQUEST',
+  //   '/request/create': 'REQUEST',
+  //   '/craft': 'CRAFT',
+  //   '/gather': 'GATHER',
+  //   '/deliver': 'DELIVER'
+  // };
+
+  function router() {
+    const token = localStorage.getItem('jwt');
+    const currentPath = parseLocation(document.location.hash);
+    logged = !!token;
+    if (token) {
+      // const user = JSON.parse(atob(token.split('.')[1]));
+      // const allowed = !!user.roles.find(i => i === permissionMap[currentPath]);
+      // if (allowed) {
+        path = currentPath;
+      // } else {
+      //   location.hash = `/${user.roles[0].toLowerCase()}`;
+      // }
+    }
   }
 
-  function handleMove({detail: item}) {
-    console.log(item);
-    id = item.to.id;
-    location.hash = id;
-    fetchZone();
+  function parseLocation(hash) {
+    return hash.slice(1).toLowerCase() || "/";
   }
-
-	onMount(async () => {
-    fetchZone();
-	});
   
+  window.addEventListener("hashchange", router);
+  window.addEventListener("load", router) || router();
 </script>
 
 <main>
-	<div class="app">
-    {#if mapInfo}
-      <div class="zone-container">
-        <Zone on:move={handleMove} mapInfo={mapInfo}></Zone>
-      </div>
-      <div class="menu-container">
-        <Menu map={mapInfo.name}></Menu>
-      </div>
-    {/if}
-	</div>
+  {#if !logged}
+    <Login></Login>
+  {:else}
+    <Menu logged={logged}></Menu>
+    <div class="app" id="app">
+      {#if path === '/map'}
+        <Map></Map>
+      {/if}
+    </div>
+  {/if}
 </main>
