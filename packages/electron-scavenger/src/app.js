@@ -4,7 +4,7 @@ import "./stylesheets/main.css";
 import "./helpers/context_menu.js";
 import "./helpers/external_links.js";
 import { md5 } from "./helpers/md5";
-import { startScavenge } from 'scavy';
+import { startScavenge } from 'scavenger';
 
 // ----------------------------------------------------------------------------
 // Everything below is just to show you how it works. You can delete all of it.
