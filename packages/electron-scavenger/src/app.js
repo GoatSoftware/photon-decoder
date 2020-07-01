@@ -4,11 +4,7 @@ import "./stylesheets/main.css";
 import "./helpers/context_menu.js";
 import "./helpers/external_links.js";
 import { md5 } from "./helpers/md5";
-import { init as initSender, send } from './sender';
-import sniffer from './sniffer';
-import decodePackage from './decoder';
-import { knownPackages, translatePackage } from './translator';
-import { map, filter, pluck, concatAll } from 'rxjs/operators';
+import { startScavenge } from 'scavy';
 
 // ----------------------------------------------------------------------------
 // Everything below is just to show you how it works. You can delete all of it.
@@ -59,10 +55,10 @@ async function login() {
     localStorage.setItem('remember', remember);
   }
   try {
-    const u = await submit(user, password);
-    console.log(u);
+    await submit(user, password);
     hideLogin();
     startScavenge(user);
+    loadRandomMessages();
   } catch (e) {
 
   }
@@ -73,26 +69,6 @@ function hideLogin() {
   document.getElementById('randomMessages').style.display = 'block';
 }
 
-function startScavenge(user) {
-  initSender(user)
-    .then(connected => {
-      if (connected) {
-        sniffer()
-          .pipe(
-            map(decodePackage),
-            pluck('commands'),
-            concatAll(),
-            filter(i => i),
-            filter(knownPackages),
-            map(translatePackage)
-          )
-          .subscribe(pkg => {
-            send(pkg);
-          });
-      }
-    });
-  loadRandomMessages();
-}
 
 function loadRandomMessages() {
   const messages = [

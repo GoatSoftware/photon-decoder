@@ -1,15 +1,15 @@
 import { PhotonPackagePayload } from '../decoder/decoder.models';
 
-const requestMessageMap = {
+const requestMessageMap: Record<number, boolean> = {
   21: true
 };
 
-const responseMessageMap = {
+const responseMessageMap: Record<number, boolean> = {
   35: true
 };
 
 export function knownPackages(command: PhotonPackagePayload): boolean {
-  const messagesMap = {
+  const messagesMap: Record<number, (command: PhotonPackagePayload) => boolean> = {
     2: knownRequests,
     3: knownResponses,
     4: knownEvents,
@@ -37,7 +37,7 @@ function knownEvents(command: PhotonPackagePayload) {
 
 export function translatePackage(command: PhotonPackagePayload): AoPackage {
 
-  const messagesMap = {
+  const messagesMap: Record<number, (command: PhotonPackagePayload) => AoPackage> = {
     2: mapRequests,
     3: mapResponses,
     4: mapEvents,
@@ -48,8 +48,8 @@ export function translatePackage(command: PhotonPackagePayload): AoPackage {
   }
 }
 
-function mapRequests(command: PhotonPackagePayload) {
-  const codeMapper = {
+function mapRequests(command: PhotonPackagePayload): AoPackage {
+  const codeMapper: Record<number, (command: PhotonPackagePayload) => AoPackage> = {
     21: moveMapper
   };
 
@@ -60,8 +60,8 @@ function mapRequests(command: PhotonPackagePayload) {
   }
 }
 
-function mapResponses(command: PhotonPackagePayload) {
-  const codeMapper = {
+function mapResponses(command: PhotonPackagePayload): AoPackage {
+  const codeMapper: Record<number, (command: PhotonPackagePayload) => AoPackage> = {
     35: zoneChangeMapper
   };
 
@@ -72,18 +72,15 @@ function mapResponses(command: PhotonPackagePayload) {
   }
 }
 
-function mapEvents(command: PhotonPackagePayload) {
-  const codeMapper = {
-    // 21: moveMapper
+function mapEvents(command: PhotonPackagePayload): AoPackage {
+  const codeMapper: Record<number, (command: PhotonPackagePayload) => AoPackage> = {
   };
 
-  // console.log(command.parameters);
+  const mapFn = codeMapper[command.parameters && command.parameters[253] as number];
 
-  // const mapFn = codeMapper[command.parameters && command.parameters[253] as number];
-
-  // if (mapFn) {
-  //   return mapFn(command);
-  // }
+  if (mapFn) {
+    return mapFn(command);
+  }
 }
 
 export interface AoPackage {
@@ -91,27 +88,21 @@ export interface AoPackage {
 }
 
 interface MoveAoPackage extends AoPackage {
+  /** Timestamp of the movement */
   timestamp: number;
+  /** Where you are */
   coords: number[];
+  /** Where you are looking at */
   heading: number;
+  /** Where you clicked */
   targetCoords: number[];
+  /** Current speed */
   speed: number;
+  /** Target moving to */
   target: number;
 }
 
 function moveMapper(command: PhotonPackagePayload): MoveAoPackage {
-
-  /**
-   * pkg type request
-   * 253 === 21 -> Move
-   * 0 timestamp?
-   * 1 actual Coords (Where you are)
-   * 2 Heading (Where are you looking at)
-   * 3 click Coords (Where you clicked)
-   * 4 speed
-   * 5 Target moving to (enemy or item)
-   * 253 code
-   */
   const parameters = command.parameters;
 
   return {

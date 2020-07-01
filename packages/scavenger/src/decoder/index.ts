@@ -21,7 +21,7 @@ export default function decodePackage(pkg: number[]): PhotonPackage {
     const next = readNext(pkg, 1);
 
     const cmd_type_id = hexToNumber(next);
-    const commandTypeMap = {
+    const commandTypeMap: Record<number, (cmd_type_id: any, pkg: any) => any> = {
       4: parseLogout,
       7: parseUnreliable,
       8: parseReliableFragment
@@ -30,7 +30,12 @@ export default function decodePackage(pkg: number[]): PhotonPackage {
     if (!parseFn) {
       parseFn = parseReliable;
     }
-    const command = parseFn(cmd_type_id, pkg);
+    let command: any;
+    try {
+      command = parseFn(cmd_type_id, pkg);
+    } catch (error) {
+      console.warn(error);
+    }
     if (command) {
       pack.commands.push(command);
     }
@@ -44,23 +49,20 @@ function readNext(pkg: number[], bytes: number): number[] {
   return pkg.slice(oldCursor, bytes ? cursor : undefined);
 }
 
-function parseLogout(cmd_type_id, pkg) {
+function parseLogout(cmd_type_id: number, pkg: number[]): PhotonPackagePayload {
   const aoPkg = {
     cmd_type_id: cmd_type_id,
     channel_id: hexToNumber(readNext(pkg, 1)),
     flags: hexToNumber(readNext(pkg, 1)),
     reserved_byte: hexToNumber(readNext(pkg, 1)),
     msg_len: hexToNumber(readNext(pkg, 4)),
-    reliable_sequence_number: hexToNumber(readNext(pkg, 4)),
-    msg: ''
+    reliable_sequence_number: hexToNumber(readNext(pkg, 4))
   };
-  aoPkg.msg = readNext(pkg, aoPkg.msg_len - 12).join(',');
-  console.log('logout!', aoPkg);
-
-  return aoPkg;
+  const headerLength = 12;
+  return parsePayload(readNext(pkg, aoPkg.msg_len - headerLength));
 }
 
-function parseReliable(cmd_type_id, pkg): PhotonPackagePayload {
+function parseReliable(cmd_type_id: number, pkg: number[]): PhotonPackagePayload {
   const aoPkg: PhotonPackageReliableCommand = {
     cmd_type_id: cmd_type_id,
     channel_id: hexToNumber(readNext(pkg, 1)),
@@ -77,7 +79,7 @@ function parseReliable(cmd_type_id, pkg): PhotonPackagePayload {
   }
 }
 
-function parseUnreliable(cmd_type_id, pkg): PhotonPackagePayload {
+function parseUnreliable(cmd_type_id: number, pkg: number[]): PhotonPackagePayload {
   const aoPkg: PhotonPackageUnreliableCommand = {
     cmd_type_id: cmd_type_id,
     channel_id: hexToNumber(readNext(pkg, 1)),
@@ -95,7 +97,7 @@ function parseUnreliable(cmd_type_id, pkg): PhotonPackagePayload {
   }
 }
 
-function parseReliableFragment(cmd_type_id, pkg): PhotonPackagePayload | undefined {
+function parseReliableFragment(cmd_type_id: number, pkg: number[]): PhotonPackagePayload | undefined {
   const aoPkg: PhotonPackageReliableFragmentCommand = {
     cmd_type_id: cmd_type_id,
     channel_id: hexToNumber(readNext(pkg, 1)),

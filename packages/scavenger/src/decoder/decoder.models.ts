@@ -14,7 +14,7 @@ export interface PhotonPackageHeader {
 export interface PhotonPackagePayload {
   msg_type: number;
   code: number;
-  return_code?: number;
+  return_code?: string;
   debug?: number;
   parameters?: Record<number, unknown>;
 }

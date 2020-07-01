@@ -4,7 +4,7 @@ import { PhotonPackagePayload, PhotonPackageReliableFragmentCommand } from './de
 let fragments: PhotonPackageReliableFragmentCommand[] = [];
 
 export function parsePayload(msg: number[]): PhotonPackagePayload {
-  const msgTypeMap = {
+  const msgTypeMap: Record<number, (msg_type: number, msg: number[]) => PhotonPackagePayload> = {
     2: requestMessage,
     3: responseMessage,
     4: eventMessage
@@ -22,7 +22,7 @@ export function parsePayload(msg: number[]): PhotonPackagePayload {
   }
 }
 
-function requestMessage(msg_type: number, msg): PhotonPackagePayload {
+function requestMessage(msg_type: number, msg: number[]): PhotonPackagePayload {
   const code = msg.splice(0, 1)[0];
   const parameters = typeDecoders.decodeIntHashMap(msg);
   return {
@@ -32,9 +32,9 @@ function requestMessage(msg_type: number, msg): PhotonPackagePayload {
   };
 }
 
-function responseMessage(msg_type: number, msg): PhotonPackagePayload {
+function responseMessage(msg_type: number, msg: number[]): PhotonPackagePayload {
   const code = msg.splice(0, 1)[0];
-  const return_code = msg.splice(0, 2);
+  const return_code = msg.splice(0, 2).join();
   const debug = msg.splice(0, 1)[0];
   const parameters = typeDecoders.decodeIntHashMap(msg);
   return {
@@ -46,7 +46,7 @@ function responseMessage(msg_type: number, msg): PhotonPackagePayload {
   };
 }
 
-function eventMessage(msg_type: number, msg): PhotonPackagePayload {
+function eventMessage(msg_type: number, msg: number[]): PhotonPackagePayload {
   const code = msg.splice(0, 1)[0];
   const parameters = typeDecoders.decodeIntHashMap(msg);
   return {

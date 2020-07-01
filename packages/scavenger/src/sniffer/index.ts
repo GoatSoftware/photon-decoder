@@ -1,5 +1,7 @@
+// @ts-ignore
 import { Cap, decoders } from 'cap';
 import { Subject, Observable } from 'rxjs';
+
 
 const PROTOCOL = decoders.PROTOCOL;
 
@@ -24,7 +26,7 @@ export default function sniffer(debugOptions?: DebugOptions): Observable<number[
   console.info(`Listening ${port} packages`);
   
   if (linkType === 'ETHERNET') {
-    c.on('packet', function (nbytes, trunc) {
+    c.on('packet', function (nbytes: any, trunc: any) {
       const eth = decoders.Ethernet(buffer);
       if (eth.info.type === PROTOCOL.ETHERNET.IPV4) {
         const ip4 = decoders.IPV4(buffer, eth.offset);

@@ -101,7 +101,15 @@
     position: relative;
     z-index: 10;
   }
-  .point {
+  .cluster .players {
+    transform: rotateY(180deg) rotateZ(135deg) scale(0.70710678118);
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    z-index: 15;
+  }
+
+  .player {
     width: 10px;
     height: 10px;
     border-radius: 0 50% 50% 50%;
@@ -121,6 +129,7 @@
   let mapInfo = {
     exits: {}
   };
+  let players = [];
 
   async function fetchMapInfo(id) {
     mapInfo = {
@@ -151,34 +160,31 @@
   }
 
   function handlePackage(pkg) {
-    console.log(pkg);
-    
-    // let point = document.getElementsByClassName('point ' + pkg.name)[0];
+    if (mapInfo && mapInfo.mapBounds) {
+      const currentMap = pkg.find(i => i.id === mapInfo.id);
 
-    // if (!point) {
-    //   point = document.createElement('div');
-    //   point.classList.add('point');
-    //   point.classList.add(pkg.name);
-    //   const map = document.getElementsByClassName('map')[0];
-    //   map.appendChild(point);
-    // }
+      const maxX = mapInfo.mapBounds[1][0];
+      const minX = mapInfo.mapBounds[0][0];
+      const maxY = mapInfo.mapBounds[1][1];
+      const minY = mapInfo.mapBounds[0][1];
 
-    // const coords = {
-    //   x: 0,
-    //   y: 0
-    // };
-
-    // const maxX = mapInfo.mapBounds[1][0];
-    // const minX = mapInfo.mapBounds[0][0];
-    // const maxY = mapInfo.mapBounds[1][1];
-    // const minY = mapInfo.mapBounds[0][1];
-    
-    // coords.x = ((pkg.aoPkg.coords[0] + maxX) * 100) / (maxX - minX);
-    // coords.y = ((pkg.aoPkg.coords[1] + maxY) * 100) / (maxY - minY);
-    // console.log(coords);
-    // point.style.top = `calc(${coords.y}% - 7.5px)`;
-    // point.style.left = `calc(${coords.x}% - 7.5px)`;
-    // point.style.transform = `rotate(${-1 * (pkg.aoPkg.heading + 135)}deg)`;
+      if (currentMap) {
+        players = currentMap.players.map(i => {
+          const coords = {
+            x: ((i.x + maxX) * 100) / (maxX - minX),
+            y: ((i.y + maxY) * 100) / (maxY - minY)
+          };
+          return {
+            name: i.name,
+            style: {
+              top: `calc(${coords.y}% - 7.5px)`,
+              left: `calc(${coords.x}% - 7.5px)`,
+              transform: `rotate(${-1 * (i.heading + 135)}deg)`
+            }
+          };
+        });
+      }
+    }
   }
 
   initMap();
@@ -189,6 +195,11 @@
   {#if mapInfo.id}
     <div class="cluster-container">
       <div class="cluster">
+        <div class="players">
+          {#each players as player}
+            <div class={`player ${player.name}`} style={ `top: ${player.style.top}; left: ${player.style.left}; transform: ${player.style.transform};` } title={player.name}></div>
+          {/each}
+        </div>
         <img src="{imagesUrl}/{mapInfo.id}.png" alt="" />
       </div>
       <div on:click={() => zoneClick('NE')} class="ne-cluster cluster side-cluster {mapInfo.exits.NE && mapInfo.exits.NE.type}">

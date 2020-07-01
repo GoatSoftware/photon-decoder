@@ -3,10 +3,10 @@ import { PhotonPackageHeader } from './decoder.models';
 
 
 /**
- * 
+ *
  */
 function decodeType(key_type_code: number, msg: number[]): unknown {
-  const typeCodeParser = {
+  const typeCodeParser: Record<number, (msg: number[]) => any> = {
     0: decodeTypeNone,                  // 0x00
     42: decodeTypeNull,                 // 0x2A
     68: decodeTypeDictionary,           // 0x44
@@ -35,7 +35,7 @@ function decodeType(key_type_code: number, msg: number[]): unknown {
 }
 
 /**
- * 
+ *
  */
 function decodePhotonHeader(msg: number[]): PhotonPackageHeader {
   return {
@@ -48,13 +48,13 @@ function decodePhotonHeader(msg: number[]): PhotonPackageHeader {
 }
 
 /**
- * 
+ *
  */
 function decodeIntHashMap(msg: number[]): Record<number, unknown> {
   // console.log('decodeIntHashMap', JSON.stringify(msg));
-  
+
   const size = decodeTypeShort(msg);
-  const ret = {};
+  const ret: Record<number, unknown> = {};
   for (let i = 0; i < size; i++) {
     const key = decodeTypeByte(msg);
     const key_type_code = decodeTypeByte(msg);
@@ -64,7 +64,7 @@ function decodeIntHashMap(msg: number[]): Record<number, unknown> {
 }
 
 /**
- * 
+ *
  */
 function decodeTypeNone(msg: number[]) {
   if (msg.length) {
@@ -74,7 +74,7 @@ function decodeTypeNone(msg: number[]) {
 }
 
 /**
- * 
+ *
  */
 function decodeTypeNull(msg: number[]) {
   if (msg.length) {
@@ -84,22 +84,22 @@ function decodeTypeNull(msg: number[]) {
 }
 
 /**
- * 
+ *
  */
 function decodeTypeDictionary(msg: number[]) {
   const key_type_code = decodeTypeByte(msg);
   const value_type_code = decodeTypeByte(msg);
   const size = decodeTypeShort(msg);
-  const ret = {};
+  const ret: Record<string | number, unknown> = {};
   for (let i = 0; i < size; i++) {
-    const key = decodeType(key_type_code, msg) as any;
+    const key = decodeType(key_type_code, msg) as string | number;
     ret[key] = decodeType(value_type_code, msg);
   }
   return ret;
 }
 
 /**
- * 
+ *
  */
 function decodeTypeStringArray(msg: number[]) {
   const size = decodeTypeShort(msg);
@@ -111,14 +111,14 @@ function decodeTypeStringArray(msg: number[]) {
 }
 
 /**
- * 
+ *
  */
 function decodeTypeByte(msg: number[]): number {
   return hexToNumber(msg.splice(0, 1));
 }
 
 /**
- * 
+ *
  */
 function decodeTypeDouble(msg: number[]): number {
   const float = msg.splice(0, 8);
@@ -128,12 +128,12 @@ function decodeTypeDouble(msg: number[]): number {
   float.forEach((i, index) => {
     view.setInt8(index, i);
   });
-  
+
   return view.getFloat64(0);
 }
 
 /**
- * 
+ *
  */
 function decodeTypeEventData(msg: number[]) {
   const code = decodeTypeByte(msg);
@@ -145,7 +145,7 @@ function decodeTypeEventData(msg: number[]) {
 }
 
 /**
- * 
+ *
  */
 function decodeTypeFloat(msg: number[]): number {
   const float = msg.splice(0, 4);
@@ -155,33 +155,33 @@ function decodeTypeFloat(msg: number[]): number {
   float.forEach((i, index) => {
     view.setInt8(index, i);
   });
-  
+
   return view.getFloat32(0);
 }
 
 /**
- * 
+ *
  */
 function decodeTypeInteger(msg: number[]): number {
   return hexToNumber(msg.splice(0, 4));
 }
 
 /**
- * 
+ *
  */
 function decodeTypeShort(msg: number[]): number {
   return hexToNumber(msg.splice(0, 2));
 }
 
 /**
- * 
+ *
  */
 function decodeTypeLong(msg: number[]): number {
   return hexToNumber(msg.splice(0, 10));
 }
 
 /**
- * 
+ *
  */
 function decodeTypeBooleanArray(msg: number[]) {
   const size = decodeTypeShort(msg);
@@ -193,14 +193,14 @@ function decodeTypeBooleanArray(msg: number[]) {
 }
 
 /**
- * 
+ *
  */
 function decodeTypeBoolean(msg: number[]): boolean {
   return msg.splice(0, 1)[0] === 1;
 }
 
 /**
- * 
+ *
  */
 function decodeTypeOperationResponse(msg: number[]) {
   const code = decodeTypeByte(msg);
@@ -218,7 +218,7 @@ function decodeTypeOperationResponse(msg: number[]) {
 }
 
 /**
- * 
+ *
  */
 function decodeTypeOperationRequest(msg: number[]) {
   const code = decodeTypeByte(msg);
@@ -230,7 +230,7 @@ function decodeTypeOperationRequest(msg: number[]) {
 }
 
 /**
- * 
+ *
  */
 function decodeTypeString(msg: number[]): string {
   const size = decodeTypeShort(msg);
@@ -242,11 +242,14 @@ function decodeTypeString(msg: number[]): string {
 }
 
 /**
- * 
+ *
  */
-function decodeTypeByteArray(msg: number[]) {
+function decodeTypeByteArray(msg: number[]): number[] {
   const size = decodeTypeInteger(msg);
-  const value = [];
+  if (size > msg.length) {
+    throw new Error('Incorrect array size in decodeTypeByteArray');
+  }
+  const value: number[] = [];
   for (let i = 0; i < size; i++) {
     value.push(decodeTypeByte(msg));
   }
@@ -254,12 +257,12 @@ function decodeTypeByteArray(msg: number[]) {
 }
 
 /**
- * 
+ *
  */
-function decodeTypeArray(msg: number[]): number[] {
+function decodeTypeArray(msg: number[]): unknown[] {
   const size = decodeTypeShort(msg);
   const key_type_code = decodeTypeByte(msg);
-  const ret = [];
+  const ret: unknown[] = [];
   for (let i = 0; i < size; i++) {
     ret.push(decodeType(key_type_code, msg));
   }
@@ -267,7 +270,7 @@ function decodeTypeArray(msg: number[]): number[] {
 }
 
 /**
- * 
+ *
  */
 function decodeTypeObjectArray(msg: number[]) {
   const size = decodeTypeShort(msg);
