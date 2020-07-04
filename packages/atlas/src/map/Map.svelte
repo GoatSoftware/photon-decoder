@@ -1,4 +1,8 @@
 <style>
+  .map {
+    display: flex;
+  }
+
   .cluster-container {
     width: 100vh;
     height: 100vh;
@@ -109,7 +113,7 @@
     z-index: 15;
   }
 
-  .player {
+  .cluster .players .player {
     width: 10px;
     height: 10px;
     border-radius: 0 50% 50% 50%;
@@ -118,11 +122,77 @@
     margin-top: 5px;
     position: absolute;
   }
+
+  .map-options {
+    width: calc(100vw - 100vh - 150px);
+    border-left: 1px solid var(--basic);
+    box-sizing: border-box;
+    height: 100vh;
+  }
+
+  .map-options .title {
+    text-align: center;
+    font-size: 3rem;
+    background-color: var(--basic);
+    padding: 20px;
+  }
+
+  .map-options .options {
+    padding: 20px 20px 0 20px;
+    font-size: 0;
+  }
+  .map-options .options button {
+    width: calc(50% - 10px);
+    margin-right: 20px;
+  }
+
+  .map-options .options button:last-child {
+    margin-right: 0;
+  }
+
+  .selected-info {
+    display: flex;
+    padding: 20px 20px 0 20px;
+  }
+
+  .selected-info .selected {
+    width: calc(50% - 10px);
+    margin-right: 20px;
+  }
+
+  .selected-info .selected:last-child {
+    margin-right: 0;
+  }
+
+  .map-options .selected-option {
+    padding: 20px;
+    max-height: calc(100% - 287px);
+    overflow-y: scroll;
+  }
+  
+  .actions {
+    margin-top: 20px;
+    font-size: 0;
+  }
+
+  .actions button {
+    width: 100%;
+  }
+
+  .actions.double button {
+    width: calc(50% - 10px);
+    margin-right: 20px;
+  }
+
+  .actions.double button:last-child {
+    margin-right: 0;
+  }
 </style>
 
 <script>
   import { getSocket } from '../lib/socket';
-  // import Toastify from 'toastify-js'
+  import Toastify from 'toastify-js';
+  import zones from '../common/zones';
 
   const imagesUrl = 'http://goatsoft.es/atlas/assets/maps';
 
@@ -130,10 +200,19 @@
     exits: {}
   };
   let players = [];
+  let currentState;
+
+  let destinationZone;
+  let selectedPlayer = '';
+  let selectedOption = '';
+  let pausedTracking = false;
+  let mapFilter = '';
 
   async function fetchMapInfo(id) {
+    const currentZone = zones.find(i => i.id === id.toString());
     mapInfo = {
       id: id,
+      name: currentZone && currentZone.name,
       exits: {}
     }
 		mapInfo = await (await fetch(`http://goatsoft.es/atlas/api/v1/${id}.json`, {
@@ -144,7 +223,19 @@
   }
 
   function zoneClick(exit) {
-    fetchMapInfo(mapInfo.exits[exit].id);
+    moveToMap(mapInfo.exits[exit].id);
+  }
+
+  function moveToMap(id) {
+    if (selectedPlayer && !pausedTracking) {
+      pausedTracking = true;
+      Toastify({
+        text: `Se ha pausado el seguimiento de ${selectedPlayer}`,
+        selector: 'app',
+        backgroundColor: 'linear-gradient(135deg, #981b1b, #6c1313)'
+      }).showToast();
+    }
+    fetchMapInfo(id);
   }
 
   async function initMap() {
@@ -154,19 +245,32 @@
   }
 
   function initAtlas(socket) {
-      console.log('Atlas initialization');
-      socket.on('aoState', handlePackage);
-      fetchMapInfo(3004);
+    console.log('Atlas initialization');
+    socket.on('aoState', handlePackage);
+    fetchMapInfo(3004);
   }
 
-  function handlePackage(pkg) {
+  async function handlePackage(pkg) {
+    currentState = pkg;
     if (mapInfo && mapInfo.mapBounds) {
-      const currentMap = pkg.find(i => i.id === mapInfo.id);
-
-      const maxX = mapInfo.mapBounds[1][0];
+      const currentMap = currentState.find(i => i.id === mapInfo.id);
+      if (selectedPlayer && !pausedTracking && (!currentMap || !currentMap.players.find(i => i.name === selectedPlayer))) {
+        const playerMap = currentState.find(i => !!i.players.find(j => j.name === selectedPlayer));
+        if (playerMap) {
+          await fetchMapInfo(playerMap.id);
+        } else {
+          Toastify({
+            text: `No se encuentra al jugador ${selectedPlayer}`,
+            selector: 'app',
+            backgroundColor: 'linear-gradient(135deg, #981b1b, #6c1313)'
+          }).showToast();
+          selectedPlayer = '';
+        }
+      }
       const minX = mapInfo.mapBounds[0][0];
-      const maxY = mapInfo.mapBounds[1][1];
       const minY = mapInfo.mapBounds[0][1];
+      const maxX = mapInfo.mapBounds[1][0];
+      const maxY = mapInfo.mapBounds[1][1];
 
       if (currentMap) {
         players = currentMap.players.map(i => {
@@ -183,8 +287,36 @@
             }
           };
         });
+      } else {
+        players = [];
       }
     }
+  }
+
+  function optionSearch(option) {
+    selectedOption = option;
+  }
+
+  function allPlayers() {
+    return currentState.reduce((acc, i) => {
+      return acc.concat(i.players);
+    }, []);
+  }
+
+  function resumeTracking() {
+    pausedTracking = false;
+  }
+
+  function setDestination(destination) {
+    destinationZone = destination;
+  }
+
+  function trackPlayer(player) {
+    selectedPlayer = player;
+  }
+
+  function filteredZones(zones, filter) {
+    return zones.filter(i => i.name.toLowerCase().includes(filter.toLowerCase()));
   }
 
   initMap();
@@ -228,4 +360,60 @@
       </div>
     </div>
   {/if}
+  <div class="map-options">
+    <div class="title">{mapInfo.name}</div>
+    <div class="selected-info">
+      <div class="selected zone">
+        <div>
+          &nbsp;
+          {#if destinationZone}
+            Direcciones a: {zones.find(i => i.id === destinationZone.toString()).name}
+          {/if}
+        </div>
+        <div class="actions">
+          {#if destinationZone}
+            <button on:click={() => {setDestination('')}}>Borrar destino</button>
+          {:else}
+            <button on:click={() => {setDestination(mapInfo.id)}}>Direcciones a este mapa</button>
+          {/if}
+        </div>
+      </div>
+      <div class="selected player">
+        {#if selectedPlayer}
+          <div>
+            Seguimiento de: {selectedPlayer} {#if pausedTracking}(pausado){/if}
+          </div>
+          <div class="actions {pausedTracking ? 'double' : '' }">
+            {#if pausedTracking}
+              <button on:click={resumeTracking}>Reanudar</button>
+            {/if}
+            <button on:click={() => trackPlayer('')}>Dejar de seguir</button>
+          </div>
+        {/if}
+      </div>
+    </div>
+    <div class="options">
+      <button on:click={() => {optionSearch('zone')}}>Buscar zona</button>
+      <button on:click={() => {optionSearch('player')}}>Buscar jugador</button>
+    </div>
+    <div class="selected-option">
+      {#if selectedOption === 'zone'}
+        <input type="text" bind:value={mapFilter}>
+
+        {#each filteredZones(zones, mapFilter) as zone}
+          <div>
+            <span on:click={() => moveToMap(zone.id)}>{zone.name}</span><span on:click={() => setDestination(zone.id)}>Dest</span>
+          </div>
+        {/each}
+      {:else if selectedOption === 'player'}
+        {#each allPlayers() as player}
+          <div>
+            <span on:click={() => trackPlayer(player.name)}>
+              {player.name}
+            </span>
+          </div>
+        {/each}
+      {/if}
+    </div>
+  </div>
 </div>
