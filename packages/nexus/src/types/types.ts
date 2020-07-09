@@ -20,6 +20,7 @@ export interface Player {
   name: string;
   x: number;
   y: number;
+  heading: number;
 }
 
 export interface PathFindingNode {

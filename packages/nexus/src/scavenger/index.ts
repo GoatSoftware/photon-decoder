@@ -70,7 +70,8 @@ function updateState(name: string, aoPkg) {
     const player: Player = {
       name: name,
       x: 0,
-      y: 0
+      y: 0,
+      heading: 0
     };
     if (newZone) {
       newZone.players.push(player);
@@ -86,13 +87,15 @@ function updateState(name: string, aoPkg) {
       const player = playerZone.players.find(i => i.name === name);
       player.x = aoPkg.coords[0];
       player.y = aoPkg.coords[1];
+      player.heading = aoPkg.heading;
     } else {
       currentState.push({
         id: 'unknown',
         players: [{
           name: name,
           x: aoPkg.coords[0],
-          y: aoPkg.coords[1]
+          y: aoPkg.coords[1],
+          heading: aoPkg.heading
         }]
       });
     }
