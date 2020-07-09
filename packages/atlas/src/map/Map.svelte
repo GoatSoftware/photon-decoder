@@ -79,6 +79,17 @@
     content: '▼'
   }
 
+  
+  .cluster-container .cluster.side-cluster.destination-path .subcluster-name:after,
+  .cluster-container .cluster.side-cluster.destination-path .subcluster-name:before {
+    animation: blink 500ms alternate infinite;
+  }
+
+  @keyframes blink {
+    0%   {opacity: 1;}
+    100% {opacity: 0;}
+  }
+
   .cluster-container .cluster.side-cluster.BLACK,
   .cluster-container .cluster.side-cluster.CITY_BLACK {
     color: hsla(0, 0%, 70%, 1);
@@ -128,6 +139,7 @@
     border-left: 1px solid var(--basic);
     box-sizing: border-box;
     height: 100vh;
+    overflow: hidden;
   }
 
   .map-options .title {
@@ -166,8 +178,12 @@
 
   .map-options .selected-option {
     padding: 20px;
-    max-height: calc(100% - 287px);
-    overflow-y: scroll;
+    max-height: calc(100% - 288px);
+    overflow-y: auto;
+  }
+
+  .map-options .selected-option .zone-search {
+    width: 200px;
   }
   
   .actions {
@@ -187,12 +203,42 @@
   .actions.double button:last-child {
     margin-right: 0;
   }
+
+  .list {
+    margin-top: 20px;
+  }
+
+  .list .item {
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    border-bottom: 1px solid var(--basic);
+  }
+
+  .list .item .icon {
+    margin-right: 20px;
+  }
+
+  .list .item .name {
+    cursor: pointer;
+    width: 200px;
+  }
+
+  .list .item .unknown {
+    margin-left: 48px;
+  }
+
+  .list .item:last-child {
+    border-bottom: none;
+  }
+
 </style>
 
 <script>
   import { getSocket } from '../lib/socket';
   import Toastify from 'toastify-js';
   import zones from '../common/zones';
+  import Icon from '../common/Icon.svelte';
 
   const imagesUrl = 'http://goatsoft.es/atlas/assets/maps';
 
@@ -203,6 +249,7 @@
   let currentState;
 
   let destinationZone;
+  let nextExit;
   let selectedPlayer = '';
   let selectedOption = '';
   let pausedTracking = false;
@@ -220,6 +267,7 @@
       headers: {
         'Access-Control-Allow-Origin':'*'
       }})).json();
+    fetchDirections();
   }
 
   function zoneClick(exit) {
@@ -298,9 +346,11 @@
   }
 
   function allPlayers() {
-    return currentState.reduce((acc, i) => {
-      return acc.concat(i.players);
+    const x = currentState.reduce((acc, i) => {
+      return acc.concat(i.players.map(j => ({...j, zone: zones.find(k => k.id === i.id.toString())})));
     }, []);
+    
+    return x;
   }
 
   function resumeTracking() {
@@ -309,6 +359,7 @@
 
   function setDestination(destination) {
     destinationZone = destination;
+    fetchDirections();
   }
 
   function trackPlayer(player) {
@@ -317,6 +368,20 @@
 
   function filteredZones(zones, filter) {
     return zones.filter(i => i.name.toLowerCase().includes(filter.toLowerCase()));
+  }
+
+  async function fetchDirections() {
+    if (mapInfo.id && destinationZone) {
+      const directions = await (await fetch(`http://goatsoft.es:6768/path?from=${mapInfo.id}&to=${destinationZone}`, {
+        mode: 'cors',
+        headers: {
+          'Access-Control-Allow-Origin':'*'
+        }})).json();
+      nextExit = '';
+      if (directions[1]) {
+        nextExit = directions[1].dir;
+      }
+    }
   }
 
   initMap();
@@ -334,25 +399,25 @@
         </div>
         <img src="{imagesUrl}/{mapInfo.id}.png" alt="" />
       </div>
-      <div on:click={() => zoneClick('NE')} class="ne-cluster cluster side-cluster {mapInfo.exits.NE && mapInfo.exits.NE.type}">
+      <div on:click={() => zoneClick('NE')} class="ne-cluster cluster side-cluster {mapInfo.exits.NE && mapInfo.exits.NE.type} {nextExit === 'NE' ? 'destination-path' : ''}">
         {#if mapInfo.exits.NE}
           <img src="{imagesUrl}/{mapInfo.exits.NE.id}.png" alt="" />
           <div class="subcluster-name">{mapInfo.exits.NE.name}</div>
         {/if}
       </div>
-      <div on:click={() => zoneClick('NW')} class="nw-cluster cluster side-cluster {mapInfo.exits.NW && mapInfo.exits.NW.type}">
+      <div on:click={() => zoneClick('NW')} class="nw-cluster cluster side-cluster {mapInfo.exits.NW && mapInfo.exits.NW.type} {nextExit === 'NW' ? 'destination-path' : ''}">
         {#if mapInfo.exits.NW}
           <img src="{imagesUrl}/{mapInfo.exits.NW.id}.png" alt="" />
           <div class="subcluster-name">{mapInfo.exits.NW.name}</div>
         {/if}
       </div>
-      <div on:click={() => zoneClick('SE')} class="se-cluster cluster side-cluster {mapInfo.exits.SE && mapInfo.exits.SE.type}">
+      <div on:click={() => zoneClick('SE')} class="se-cluster cluster side-cluster {mapInfo.exits.SE && mapInfo.exits.SE.type} {nextExit === 'SE' ? 'destination-path' : ''}">
         {#if mapInfo.exits.SE}
           <img src="{imagesUrl}/{mapInfo.exits.SE.id}.png" alt="" />
           <div class="subcluster-name">{mapInfo.exits.SE.name}</div>
         {/if}
       </div>
-      <div on:click={() => zoneClick('SW')} class="sw-cluster cluster side-cluster {mapInfo.exits.SW && mapInfo.exits.SW.type}">
+      <div on:click={() => zoneClick('SW')} class="sw-cluster cluster side-cluster {mapInfo.exits.SW && mapInfo.exits.SW.type} {nextExit === 'SW' ? 'destination-path' : ''}">
         {#if mapInfo.exits.SW}
           <img src="{imagesUrl}/{mapInfo.exits.SW.id}.png" alt="" />
           <div class="subcluster-name">{mapInfo.exits.SW.name}</div>
@@ -367,7 +432,7 @@
         <div>
           &nbsp;
           {#if destinationZone}
-            Direcciones a: {zones.find(i => i.id === destinationZone.toString()).name}
+            Indicaciones para: {zones.find(i => i.id === destinationZone.toString()).name}
           {/if}
         </div>
         <div class="actions">
@@ -398,21 +463,35 @@
     </div>
     <div class="selected-option">
       {#if selectedOption === 'zone'}
-        <input type="text" bind:value={mapFilter}>
-
-        {#each filteredZones(zones, mapFilter) as zone}
-          <div>
-            <span on:click={() => moveToMap(zone.id)}>{zone.name}</span><span on:click={() => setDestination(zone.id)}>Dest</span>
-          </div>
-        {/each}
+        <input class="zone-search" type="text" placeholder="Buscar" bind:value={mapFilter}>
+        <div class="list">
+          {#each filteredZones(zones, mapFilter) as zone}
+            <div class="item">
+              <span class="icon" on:click={() => setDestination(zone.id)}><Icon name="gps"></Icon></span>
+              <span class="name" on:click={() => moveToMap(zone.id)}>{zone.name}</span>
+            </div>
+          {/each}
+        </div>
       {:else if selectedOption === 'player'}
-        {#each allPlayers() as player}
-          <div>
-            <span on:click={() => trackPlayer(player.name)}>
-              {player.name}
-            </span>
-          </div>
-        {/each}
+        <div class="list">
+          {#each allPlayers() as player}
+            <div class="item">
+              <span class="name" on:click={() => trackPlayer(player.name)}>
+                {player.name}
+              </span>
+              <span class="zone">
+                {#if player.zone}
+                  <span class="icon" on:click={() => setDestination(player.zone.id)}><Icon name="gps"></Icon></span>
+                  <span class="name" on:click={() => moveToMap(player.zone.id)}>{player.zone.name}</span>
+                {:else}
+                  <span class="unknown">
+                    Desconocido
+                  </span>
+                {/if}
+              </span>
+            </div>
+          {/each}
+        </div>
       {/if}
     </div>
   </div>
