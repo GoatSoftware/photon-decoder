@@ -240,7 +240,7 @@
   import zones from '../common/zones';
   import Icon from '../common/Icon.svelte';
 
-  const imagesUrl = 'http://goatsoft.es/atlas/assets/maps';
+  const imagesUrl = `${environment.STATIC_URL}/assets/maps`;
 
   let mapInfo = {
     exits: {}
@@ -262,11 +262,7 @@
       name: currentZone && currentZone.name,
       exits: {}
     }
-		mapInfo = await (await fetch(`http://goatsoft.es/atlas/api/v1/${id}.json`, {
-      mode: 'cors',
-      headers: {
-        'Access-Control-Allow-Origin':'*'
-      }})).json();
+		mapInfo = await (await fetch(`${environment.STATIC_URL}/api/v1/${id}.json`)).json();
     fetchDirections();
   }
 
@@ -372,11 +368,7 @@
 
   async function fetchDirections() {
     if (mapInfo.id && destinationZone) {
-      const directions = await (await fetch(`http://goatsoft.es:6768/path?from=${mapInfo.id}&to=${destinationZone}`, {
-        mode: 'cors',
-        headers: {
-          'Access-Control-Allow-Origin':'*'
-        }})).json();
+      const directions = await (await fetch(`${environment.API_URL}/path?from=${mapInfo.id}&to=${destinationZone}`)).json();
       nextExit = '';
       if (directions[1]) {
         nextExit = directions[1].dir;
