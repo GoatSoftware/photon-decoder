@@ -39,7 +39,7 @@
   function close() {
     dispatch('close', {
       backdrop: true
-    })
+    });
   }
 
   function doNotClose(e) {

@@ -23,3 +23,47 @@ body::after {
   filter: brightness(0.25);
   z-index: -1;
 }
+
+/* If the screen size is 601px wide or more, set the font-size of <div> to 80px */
+@media screen and (min-width: 601px) {
+  html {
+    font-size: 18px;
+  }
+}
+
+/* If the screen size is 600px wide or less, set the font-size of <div> to 30px */
+@media screen and (max-width: 600px) {
+  html {
+    font-size: 30px;
+  }
+}
+@media screen and (max-width: 479px) {
+  /* Mobile devices */
+  html {
+    font-size: 10px;
+  }
+}
+@media screen and (min-width: 480px) {
+  /* iPads, Tablets */
+  html {
+    font-size: 11px;
+  }
+}
+@media screen and (min-width: 768px) {
+  /* Small screens, laptops */
+  html {
+    font-size: 12px;
+  }
+}
+@media screen and (min-width: 1024px) {
+  /* Desktops, large screens */
+  html {
+    font-size: 13px;
+  }
+}
+@media screen and (min-width: 1200px) {
+  /* Extra large screens, TV */
+  html {
+    font-size: 18px;
+  }
+}

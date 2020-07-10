@@ -3,137 +3,6 @@
     display: flex;
   }
 
-  .cluster-container {
-    width: 100vh;
-    height: 100vh;
-    overflow: hidden;
-    position: relative;
-  }
-
-  .ne-cluster {
-    top: -30vh;
-    right: -30vh;
-  }
-
-  .nw-cluster {
-    top: -30vh;
-    left: -30vh;
-  }
-
-  .se-cluster {
-    bottom: -30vh;
-    right: -30vh;
-  }
-
-  .sw-cluster {
-    bottom: -30vh;
-    left: -30vh;
-  }
-
-  .cluster-container .cluster.side-cluster {
-    position: absolute;
-    width: 70%;
-    height: 70%;
-    cursor: pointer;
-  }
-
-  .cluster-container .cluster.side-cluster .subcluster-name {
-    position: relative;
-    text-align: center;
-    font-size: 2.5rem;
-  }
-
-  .cluster-container .cluster.side-cluster.ne-cluster .subcluster-name {
-    left: -18vh;
-    transform: rotate(45deg);
-    top: -18vh;
-  }
-
-  .cluster-container .cluster.side-cluster.nw-cluster .subcluster-name {
-    left: 18vh;
-    transform: rotate(-45deg);
-    top: -18vh;
-  }
-  .cluster-container .cluster.side-cluster.se-cluster .subcluster-name {
-    left: -19vh;
-    top: -56vh;
-    transform: rotate(-45deg);
-  }
-  .cluster-container .cluster.side-cluster.sw-cluster .subcluster-name {
-    left: 19vh;
-    transform: rotate(45deg);
-    top: -56vh;
-  }
-
-  .cluster-container .cluster.side-cluster.ne-cluster .subcluster-name:after,
-  .cluster-container .cluster.side-cluster.ne-cluster .subcluster-name:before,
-  .cluster-container .cluster.side-cluster.nw-cluster .subcluster-name:after,
-  .cluster-container .cluster.side-cluster.nw-cluster .subcluster-name:before {
-    content: '▲'
-  }
-
-  .cluster-container .cluster.side-cluster.se-cluster .subcluster-name:after,
-  .cluster-container .cluster.side-cluster.se-cluster .subcluster-name:before,
-  .cluster-container .cluster.side-cluster.sw-cluster .subcluster-name:after,
-  .cluster-container .cluster.side-cluster.sw-cluster .subcluster-name:before {
-    content: '▼'
-  }
-
-  
-  .cluster-container .cluster.side-cluster.destination-path .subcluster-name:after,
-  .cluster-container .cluster.side-cluster.destination-path .subcluster-name:before {
-    animation: blink 500ms alternate infinite;
-  }
-
-  @keyframes blink {
-    0%   {opacity: 1;}
-    100% {opacity: 0;}
-  }
-
-  .cluster-container .cluster.side-cluster.BLACK,
-  .cluster-container .cluster.side-cluster.CITY_BLACK {
-    color: hsla(0, 0%, 70%, 1);
-  }
-
-  .cluster-container .cluster.side-cluster.RED {
-    color: hsla(0, 100%, 70%, 1);
-  }
-
-  .cluster-container .cluster.side-cluster.YELLOW {
-    color: hsla(60, 100%, 70%, 1);
-  }
-
-  .cluster-container .cluster.side-cluster.BLUE,
-  .cluster-container .cluster.side-cluster.STARTINGCITY,
-  .cluster-container .cluster.side-cluster.CITY_BLUE {
-    color: hsla(240, 100%, 70%, 1);
-  }
-
-  .cluster-container .cluster img {
-    transform: rotateY(180deg) rotateZ(135deg) scale(0.70710678118);
-    width: 100%;
-    height: 100%;
-    position: relative;
-    z-index: 10;
-  }
-  .cluster .players {
-    transform: rotateY(180deg) rotateZ(135deg) scale(0.70710678118);
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    z-index: 15;
-  }
-
-  .cluster .players .player {
-    width: 10px;
-    height: 10px;
-    border-radius: 0 50% 50% 50%;
-    border: 3px solid black;
-    transform: rotate(45deg);
-    margin-top: 5px;
-    position: absolute;
-  }
-
   .map-options {
     width: calc(100vw - 100vh - 150px);
     border-left: 1px solid var(--basic);
@@ -239,8 +108,7 @@
   import Toastify from 'toastify-js';
   import zones from '../common/zones';
   import Icon from '../common/Icon.svelte';
-
-  const imagesUrl = `${environment.STATIC_URL}/assets/maps`;
+  import Cluster from './Cluster.svelte';
 
   let mapInfo = {
     exits: {}
@@ -266,8 +134,8 @@
     fetchDirections();
   }
 
-  function zoneClick(exit) {
-    moveToMap(mapInfo.exits[exit].id);
+  function zoneClick(event) {
+    moveToMap(mapInfo.exits[event.detail.direction].id);
   }
 
   function moveToMap(id) {
@@ -291,7 +159,7 @@
   function initAtlas(socket) {
     console.log('Atlas initialization');
     socket.on('aoState', handlePackage);
-    fetchMapInfo(3004);
+    fetchMapInfo(4000);
   }
 
   async function handlePackage(pkg) {
@@ -367,9 +235,9 @@
   }
 
   async function fetchDirections() {
+    nextExit = '';
     if (mapInfo.id && destinationZone) {
       const directions = await (await fetch(`${environment.API_URL}/path?from=${mapInfo.id}&to=${destinationZone}`)).json();
-      nextExit = '';
       if (directions[1]) {
         nextExit = directions[1].dir;
       }
@@ -382,40 +250,7 @@
 
 <div class="map">
   {#if mapInfo.id}
-    <div class="cluster-container">
-      <div class="cluster">
-        <div class="players">
-          {#each players as player}
-            <div class={`player ${player.name}`} style={ `top: ${player.style.top}; left: ${player.style.left}; transform: ${player.style.transform};` } title={player.name}></div>
-          {/each}
-        </div>
-        <img src="{imagesUrl}/{mapInfo.id}.png" alt="" />
-      </div>
-      <div on:click={() => zoneClick('NE')} class="ne-cluster cluster side-cluster {mapInfo.exits.NE && mapInfo.exits.NE.type} {nextExit === 'NE' ? 'destination-path' : ''}">
-        {#if mapInfo.exits.NE}
-          <img src="{imagesUrl}/{mapInfo.exits.NE.id}.png" alt="" />
-          <div class="subcluster-name">{mapInfo.exits.NE.name}</div>
-        {/if}
-      </div>
-      <div on:click={() => zoneClick('NW')} class="nw-cluster cluster side-cluster {mapInfo.exits.NW && mapInfo.exits.NW.type} {nextExit === 'NW' ? 'destination-path' : ''}">
-        {#if mapInfo.exits.NW}
-          <img src="{imagesUrl}/{mapInfo.exits.NW.id}.png" alt="" />
-          <div class="subcluster-name">{mapInfo.exits.NW.name}</div>
-        {/if}
-      </div>
-      <div on:click={() => zoneClick('SE')} class="se-cluster cluster side-cluster {mapInfo.exits.SE && mapInfo.exits.SE.type} {nextExit === 'SE' ? 'destination-path' : ''}">
-        {#if mapInfo.exits.SE}
-          <img src="{imagesUrl}/{mapInfo.exits.SE.id}.png" alt="" />
-          <div class="subcluster-name">{mapInfo.exits.SE.name}</div>
-        {/if}
-      </div>
-      <div on:click={() => zoneClick('SW')} class="sw-cluster cluster side-cluster {mapInfo.exits.SW && mapInfo.exits.SW.type} {nextExit === 'SW' ? 'destination-path' : ''}">
-        {#if mapInfo.exits.SW}
-          <img src="{imagesUrl}/{mapInfo.exits.SW.id}.png" alt="" />
-          <div class="subcluster-name">{mapInfo.exits.SW.name}</div>
-        {/if}
-      </div>
-    </div>
+    <Cluster mapInfo={mapInfo} players={players} nextExit={nextExit} on:zoneClick={zoneClick}></Cluster>
   {/if}
   <div class="map-options">
     <div class="title">{mapInfo.name}</div>
@@ -431,7 +266,7 @@
           {#if destinationZone}
             <button on:click={() => {setDestination('')}}>Borrar destino</button>
           {:else}
-            <button on:click={() => {setDestination(mapInfo.id)}}>Direcciones a este mapa</button>
+            <button on:click={() => {setDestination(mapInfo.id)}}>Indicaciones a este mapa</button>
           {/if}
         </div>
       </div>
